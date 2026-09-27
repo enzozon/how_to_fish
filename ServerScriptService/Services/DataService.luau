@@ -161,6 +161,15 @@ function DataService.SetEquippedRod(player: Player, rodId: string?): boolean
 	return true
 end
 
+function DataService.SetEquippedLure(player: Player, lureId: string): boolean
+	local profile = profiles[player]
+	if profile == nil or Lures[lureId] == nil then
+		return false
+	end
+	profile.Data.equippedLure = lureId
+	return true
+end
+
 function DataService.AddItem(player: Player, item: Types.ItemData): string?
 	local profile = profiles[player]
 	if profile == nil or not validItemIds[item.id] then

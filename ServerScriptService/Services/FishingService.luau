@@ -9,8 +9,11 @@ local Workspace = game:GetService("Workspace")
 
 local DataService = require(script.Parent.DataService)
 local FishRoller = require(script.Parent.Parent.Lib.FishRoller)
+local FightSim = require(script.Parent.Parent.Lib.FightSim)
 local Fishing = require(ReplicatedStorage.Shared.Config.Fishing)
+local Fish = require(ReplicatedStorage.Shared.Config.Fish)
 local Lures = require(ReplicatedStorage.Shared.Config.Lures)
+local Rods = require(ReplicatedStorage.Shared.Config.Rods)
 
 -- O estado vai para o cliente pelo atributo "State" da boia; espécie e peso ficam só aqui.
 type CastState = "Flying" | "Waiting" | "Bite" | "Hooked"
@@ -20,6 +23,9 @@ type Cast = {
 	biteEndsAt: number, -- os.clock() em que a janela de fisgada fecha
 	fishId: string?,
 	weight: number?,
+	fight: FightSim.FightState?,
+	reeling: boolean,
+	startPos: Vector3?, -- onde a boia estava ao fisgar
 }
 
 local FishingService = {}
@@ -28,6 +34,7 @@ local casts: { [Player]: Cast } = {}
 local lastCastAt: { [Player]: number } = {}
 local rodTemplates: { [string]: Tool } = {}
 local rng = Random.new()
+local fishingResult: RemoteEvent
 
 local function findRodTool(container: Instance?): Tool?
 	if container == nil then
@@ -110,6 +117,96 @@ local function biteCycle(player: Player, cast: Cast)
 	end
 end
 
+-- Linha arrebentada: a isca paga em uso se perde (a de graça não).
+local function consumeLure(player: Player)
+	local data = DataService.GetData(player)
+	if data == nil then
+		return
+	end
+	local lureId = FishRoller.resolveLureId(data)
+	if Lures[lureId].price == 0 then
+		return
+	end
+	for uid, item in data.inventory do
+		if item.id == lureId then
+			DataService.RemoveItem(player, uid)
+			return
+		end
+	end
+end
+
+local function onFishCaught(_player: Player, _fishId: string, _weight: number)
+	-- T08: cria o peixe no chão perto do jogador.
+end
+
+local function finishFight(player: Player, cast: Cast, result: FightSim.FightResult)
+	if casts[player] ~= cast then
+		return
+	end
+	local fishName: string? = nil
+	if result == "Broke" then
+		consumeLure(player)
+	elseif result == "Caught" and cast.fishId and cast.weight then
+		fishName = Fish[cast.fishId].name
+		onFishCaught(player, cast.fishId, cast.weight)
+	end
+	-- O peso não vai para o cliente; o valor aparece na inspeção (T09).
+	fishingResult:FireClient(player, result, fishName)
+	removeCast(player)
+end
+
+local function fightLoop(player: Player, cast: Cast)
+	local fish = cast.fishId and Fish[cast.fishId]
+	local data = DataService.GetData(player)
+	local rod = data and data.equippedRod and Rods[data.equippedRod]
+	local startPos = cast.startPos
+	if fish == nil or rod == nil or startPos == nil then
+		finishFight(player, cast, "Escaped")
+		return
+	end
+
+	while casts[player] == cast and cast.state == "Hooked" do
+		local dt = task.wait(Fishing.FIGHT_TICK_SECONDS)
+		if casts[player] ~= cast or cast.fight == nil then
+			return
+		end
+		local newFight, result = FightSim.step(cast.fight, cast.reeling, dt, fish, rod, rng)
+		cast.fight = newFight
+		cast.bobber:SetAttribute("Tension", newFight.tension)
+		cast.bobber:SetAttribute("Distance", newFight.distance)
+
+		-- A boia vem na direção do jogador conforme a distância cai (ancorada desde a mordida).
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") then
+			local shore = Vector3.new(root.Position.X, startPos.Y, root.Position.Z)
+			cast.bobber.CFrame = CFrame.new(startPos:Lerp(shore, 1 - newFight.distance / Fishing.START_DISTANCE))
+		end
+
+		if result ~= "Fighting" then
+			finishFight(player, cast, result)
+			return
+		end
+	end
+end
+
+local function startFight(player: Player, cast: Cast)
+	local data = DataService.GetData(player)
+	local rod = data and data.equippedRod and Rods[data.equippedRod]
+	if rod == nil then
+		removeCast(player)
+		return
+	end
+	cast.fight = FightSim.newState()
+	cast.reeling = false
+	cast.startPos = cast.bobber.Position
+	cast.bobber:SetAttribute("MaxTension", FightSim.maxTension(rod))
+	cast.bobber:SetAttribute("StartDistance", Fishing.START_DISTANCE)
+	cast.bobber:SetAttribute("Tension", 0)
+	cast.bobber:SetAttribute("Distance", Fishing.START_DISTANCE)
+	setState(cast, "Hooked") -- a boia continua afundada
+	task.spawn(fightLoop, player, cast)
+end
+
 local function followBobber(player: Player, cast: Cast)
 	local deadline = os.clock() + Fishing.SETTLE_TIMEOUT_SECONDS
 	while os.clock() < deadline and cast.state == "Flying" do
@@ -130,7 +227,11 @@ local function followBobber(player: Player, cast: Cast)
 		task.wait(0.25)
 	end
 	if casts[player] == cast then
-		removeCast(player)
+		if cast.state == "Hooked" then
+			finishFight(player, cast, "Escaped")
+		else
+			removeCast(player)
+		end
 	end
 end
 
@@ -202,6 +303,7 @@ local function onCastLine(player: Player, power: unknown)
 		bobber = createBobber(player, tip, direction * Fishing.CAST_MAX_SPEED * clampedPower),
 		state = "Flying",
 		biteEndsAt = 0,
+		reeling = false,
 	}
 	casts[player] = cast
 	task.spawn(followBobber, player, cast)
@@ -209,15 +311,23 @@ end
 
 local function onHookFish(player: Player)
 	local cast = casts[player]
-	if cast == nil or cast.state == "Flying" then
+	if cast == nil or cast.state == "Flying" or cast.state == "Hooked" then
 		return
 	end
 	if cast.state == "Bite" and os.clock() <= cast.biteEndsAt + Fishing.HOOK_LATENCY_GRACE_SECONDS then
-		setState(cast, "Hooked") -- a boia continua afundada
+		startFight(player, cast)
 		return
 	end
-	-- Clicou antes da mordida (ou já fisgado, até a T07): recolhe a linha.
+	-- Clicou antes da mordida: recolhe a linha.
 	removeCast(player)
+end
+
+local function onReelInput(player: Player, isReeling: unknown)
+	local cast = casts[player]
+	if typeof(isReeling) ~= "boolean" or cast == nil or cast.state ~= "Hooked" then
+		return
+	end
+	cast.reeling = isReeling
 end
 
 -- Garante que a mochila tenha a vara do save (ou nenhuma).
@@ -257,6 +367,9 @@ function FishingService:Start()
 	castLine.OnServerEvent:Connect(onCastLine)
 	local hookFish = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("HookFish") :: RemoteEvent
 	hookFish.OnServerEvent:Connect(onHookFish)
+	local reelInput = ReplicatedStorage.Remotes:WaitForChild("ReelInput") :: RemoteEvent
+	reelInput.OnServerEvent:Connect(onReelInput)
+	fishingResult = ReplicatedStorage.Remotes:WaitForChild("FishingResult") :: RemoteEvent
 
 	local function onPlayerAdded(player: Player)
 		player.CharacterAdded:Connect(function(character)

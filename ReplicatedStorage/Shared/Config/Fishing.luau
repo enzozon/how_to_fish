@@ -17,4 +17,17 @@ return table.freeze({
 	HOOK_LATENCY_GRACE_SECONDS = 0.3, -- folga no servidor pela latência
 	BITE_SINK_DEPTH = 1, -- studs que a boia afunda na mordida
 	RARITY_WEIGHTS = table.freeze({ Comum = 60, Incomum = 30, Raro = 9, ["Épico"] = 1 }),
+	FIGHT_TICK_SECONDS = 0.1, -- passo da simulação no servidor
+	START_DISTANCE = 20, -- "metros" até o peixe sair da água
+	REEL_SPEED = 4, -- distância recolhida por segundo segurando (luta mínima = 5 s)
+	REEL_TENSION_PER_SECOND = 30, -- tensão ganha por segundo segurando
+	STRENGTH_TENSION_REDUCTION = 0.05, -- cada ponto de rod.strength reduz 5% do ganho de tensão
+	RELAX_PER_SECOND = 40, -- tensão perdida por segundo sem segurar
+	TENSION_PER_RESISTANCE = 33, -- tensão máxima = rod.resistance × isto (Vara de Siri: 99)
+	PULL_CHANCE_PER_SECOND = 0.5, -- chance de o peixe começar um puxão, por segundo
+	PULL_DURATION_SECONDS = 0.8,
+	PULL_TENSION_PER_STRENGTH = 12, -- tensão/s por ponto de pullStrength durante o puxão
+	PULL_DISTANCE_PER_STRENGTH = 0.8, -- distância/s que o peixe ganha por ponto de pullStrength
+	BREAK_OVERLOAD_SECONDS = 0.75, -- tempo no máximo de tensão até arrebentar
+	MAX_FIGHT_SECONDS = 60, -- depois disso o peixe escapa
 })
