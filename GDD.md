@@ -189,7 +189,7 @@ UI (StarterGui) e ferramentas (StarterPack) ficam fora do Script Sync: crie via 
 
 ### 5.2 Formato de dados (exemplo)
 ```luau
--- ReplicatedStorage/Shared/Config/Fish.luau
+-- ReplicatedStorage/Shared/Types.luau (os configs em Shared/Config/ usam este tipo)
 export type FishDef = {
 	id: string,
 	name: string,
@@ -197,7 +197,7 @@ export type FishDef = {
 	lureTier: number,
 	rarity: "Comum" | "Incomum" | "Raro" | "Épico",
 	baseValue: number,
-	weightRange: { number },  -- {min, max} em kg
+	weightRange: { min: number, max: number },  -- kg
 	aggressive: boolean,
 	health: number?,
 	pullStrength: number,     -- 1..10, afeta o minijogo
