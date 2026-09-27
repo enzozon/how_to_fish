@@ -11,4 +11,10 @@ return table.freeze({
 	SETTLE_TIMEOUT_SECONDS = 5, -- sem cair na água nesse tempo, a boia é recolhida
 	SETTLE_SPEED = 2, -- studs/s: abaixo disso fora da água, a boia "parou no chão"
 	MAX_TIP_DISTANCE = 8, -- distância máxima entre a ponta da vara e o HumanoidRootPart
+	BITE_WAIT_MIN_SECONDS = 3, -- espera mínima até a mordida
+	BITE_WAIT_MAX_SECONDS = 8, -- espera máxima
+	HOOK_WINDOW_SECONDS = 1, -- janela para clicar depois da mordida
+	HOOK_LATENCY_GRACE_SECONDS = 0.3, -- folga no servidor pela latência
+	BITE_SINK_DEPTH = 1, -- studs que a boia afunda na mordida
+	RARITY_WEIGHTS = table.freeze({ Comum = 60, Incomum = 30, Raro = 9, ["Épico"] = 1 }),
 })

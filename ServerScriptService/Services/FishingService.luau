@@ -8,15 +8,26 @@ local ServerStorage = game:GetService("ServerStorage")
 local Workspace = game:GetService("Workspace")
 
 local DataService = require(script.Parent.DataService)
+local FishRoller = require(script.Parent.Parent.Lib.FishRoller)
 local Fishing = require(ReplicatedStorage.Shared.Config.Fishing)
+local Lures = require(ReplicatedStorage.Shared.Config.Lures)
 
-type Cast = { bobber: BasePart, inWater: boolean }
+-- O estado vai para o cliente pelo atributo "State" da boia; espécie e peso ficam só aqui.
+type CastState = "Flying" | "Waiting" | "Bite" | "Hooked"
+type Cast = {
+	bobber: BasePart,
+	state: CastState,
+	biteEndsAt: number, -- os.clock() em que a janela de fisgada fecha
+	fishId: string?,
+	weight: number?,
+}
 
 local FishingService = {}
 
 local casts: { [Player]: Cast } = {}
 local lastCastAt: { [Player]: number } = {}
 local rodTemplates: { [string]: Tool } = {}
+local rng = Random.new()
 
 local function findRodTool(container: Instance?): Tool?
 	if container == nil then
@@ -53,23 +64,69 @@ local function isTooFar(player: Player, bobber: BasePart): boolean
 	return root == nil or not root:IsA("BasePart") or (root.Position - bobber.Position).Magnitude > Fishing.ROPE_LENGTH
 end
 
+local function setState(cast: Cast, state: CastState)
+	cast.state = state
+	cast.bobber:SetAttribute("State", state)
+end
+
+local function sinkBobber(bobber: BasePart)
+	-- Ancorada, o empuxo não briga com o afundar.
+	bobber.Anchored = true
+	bobber.CFrame -= Vector3.new(0, Fishing.BITE_SINK_DEPTH, 0)
+end
+
+local function floatBobber(bobber: BasePart)
+	bobber.Anchored = false
+	-- Ao desancorar, o Roblox pode passar a posse para um jogador; o servidor continua dono.
+	bobber:SetNetworkOwner(nil)
+end
+
+local function biteCycle(player: Player, cast: Cast)
+	while casts[player] == cast and cast.state == "Waiting" do
+		task.wait(rng:NextNumber(Fishing.BITE_WAIT_MIN_SECONDS, Fishing.BITE_WAIT_MAX_SECONDS))
+		local data = DataService.GetData(player)
+		if casts[player] ~= cast or cast.state ~= "Waiting" or data == nil then
+			return
+		end
+		local lure = Lures[FishRoller.resolveLureId(data)]
+		local fishId, weight = FishRoller.roll(lure.tier, rng)
+		if fishId == nil then
+			warn(`[FishingService] Nenhuma espécie para o tier {lure.tier}`)
+			return
+		end
+
+		cast.fishId, cast.weight = fishId, weight
+		cast.biteEndsAt = os.clock() + Fishing.HOOK_WINDOW_SECONDS
+		sinkBobber(cast.bobber)
+		setState(cast, "Bite")
+
+		task.wait(Fishing.HOOK_WINDOW_SECONDS + Fishing.HOOK_LATENCY_GRACE_SECONDS)
+		if casts[player] == cast and cast.state == "Bite" then
+			-- Ninguém fisgou: o peixe foge e a espera recomeça.
+			cast.fishId, cast.weight = nil, nil
+			floatBobber(cast.bobber)
+			setState(cast, "Waiting")
+		end
+	end
+end
+
 local function followBobber(player: Player, cast: Cast)
 	local deadline = os.clock() + Fishing.SETTLE_TIMEOUT_SECONDS
-	while os.clock() < deadline and not cast.inWater do
+	while os.clock() < deadline and cast.state == "Flying" do
 		task.wait(0.1)
 		if casts[player] ~= cast then
 			return
 		end
 		if isInWater(cast.bobber) then
-			cast.inWater = true
-			cast.bobber:SetAttribute("InWater", true)
+			setState(cast, "Waiting")
+			task.spawn(biteCycle, player, cast)
 		elseif cast.bobber.AssemblyLinearVelocity.Magnitude < Fishing.SETTLE_SPEED then
 			break -- parou no chão
 		end
 	end
 
 	-- Na água: a linha "arrebenta" se o jogador se afastar mais que o comprimento dela.
-	while cast.inWater and casts[player] == cast and not isTooFar(player, cast.bobber) do
+	while cast.state ~= "Flying" and casts[player] == cast and not isTooFar(player, cast.bobber) do
 		task.wait(0.25)
 	end
 	if casts[player] == cast then
@@ -141,9 +198,26 @@ local function onCastLine(player: Player, power: unknown)
 	local angle = math.rad(Fishing.CAST_ANGLE_DEGREES)
 	local direction = horizontal * math.cos(angle) + Vector3.yAxis * math.sin(angle)
 
-	local cast = { bobber = createBobber(player, tip, direction * Fishing.CAST_MAX_SPEED * clampedPower), inWater = false }
+	local cast: Cast = {
+		bobber = createBobber(player, tip, direction * Fishing.CAST_MAX_SPEED * clampedPower),
+		state = "Flying",
+		biteEndsAt = 0,
+	}
 	casts[player] = cast
 	task.spawn(followBobber, player, cast)
+end
+
+local function onHookFish(player: Player)
+	local cast = casts[player]
+	if cast == nil or cast.state == "Flying" then
+		return
+	end
+	if cast.state == "Bite" and os.clock() <= cast.biteEndsAt + Fishing.HOOK_LATENCY_GRACE_SECONDS then
+		setState(cast, "Hooked") -- a boia continua afundada
+		return
+	end
+	-- Clicou antes da mordida (ou já fisgado, até a T07): recolhe a linha.
+	removeCast(player)
 end
 
 -- Garante que a mochila tenha a vara do save (ou nenhuma).
@@ -181,6 +255,8 @@ end
 function FishingService:Start()
 	local castLine = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CastLine") :: RemoteEvent
 	castLine.OnServerEvent:Connect(onCastLine)
+	local hookFish = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("HookFish") :: RemoteEvent
+	hookFish.OnServerEvent:Connect(onHookFish)
 
 	local function onPlayerAdded(player: Player)
 		player.CharacterAdded:Connect(function(character)
