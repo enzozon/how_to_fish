@@ -43,6 +43,13 @@ export type WeaponDef = {
 	damage: number,
 }
 
+export type FoodDef = {
+	id: string,
+	name: string,
+	hungerRestore: number, -- quanto de fome recupera ao comer
+	baseValue: number, -- $ de venda
+}
+
 export type ItemData = {
 	id: string, -- id de um config (Fish, Lures...)
 	weight: number?, -- kg; só peixes
