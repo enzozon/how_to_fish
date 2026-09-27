@@ -11,7 +11,6 @@ local Survival = require(ReplicatedStorage.Shared.Config.Survival)
 local HungerService = {}
 
 local function getDrainMultiplier(humanoid: Humanoid, rootPart: BasePart): number
-	-- TODO(T11): confirmar se o servidor enxerga o estado Swimming quando houver água.
 	if humanoid:GetState() == Enum.HumanoidStateType.Swimming then
 		return Survival.SWIMMING_MULTIPLIER
 	end
