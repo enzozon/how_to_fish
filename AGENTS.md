@@ -9,7 +9,9 @@ Jogo Roblox de pesca + sobrevivência + chefes, co-op até 4 jogadores. Design c
 - Código em arquivos `.luau` sincronizados com o Studio via **Script Sync**.
 - Pastas sincronizadas: `ServerScriptService/`, `ReplicatedStorage/`, `StarterPlayerScripts/`.
 - UI (StarterGui), ferramentas (StarterPack), Parts, Terrain e RemoteEvents são criados pelo **MCP do Roblox Studio**, não por arquivo.
-- Sufixos: `.server.luau` = Script, `.client.luau` = LocalScript, `.luau` = ModuleScript.
+- Sufixos: `.server.luau` = Script, `.local.luau` = LocalScript, `.luau` = ModuleScript.
+- **Não use `.client.luau`**: o Script Sync gera um Script com RunContext Client, que roda duas vezes dentro de StarterPlayerScripts.
+- Pastas vazias não sincronizam com o Studio; elas aparecem quando o primeiro arquivo entra nelas.
 
 ## Linguagem e estilo
 - Luau com `--!strict` no topo de todo arquivo.
@@ -21,7 +23,7 @@ Jogo Roblox de pesca + sobrevivência + chefes, co-op até 4 jogadores. Design c
 
 ## Arquitetura
 - Servidor: um módulo por serviço em `ServerScriptService/Services/`, iniciados por `Main.server.luau`.
-- Cliente: um módulo por controller em `StarterPlayerScripts/Controllers/`, iniciados por `Main.client.luau`.
+- Cliente: um módulo por controller em `StarterPlayerScripts/Controllers/`, iniciados por `Main.local.luau`.
 - Serviço não chama controller e vice-versa: comunicação só por Remotes em `ReplicatedStorage/Remotes`.
 
 ## Segurança (obrigatório)

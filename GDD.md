@@ -178,7 +178,7 @@ MeuJogo/
 │  │  └─ Util/
 │  └─ Remotes/                    -- RemoteEvents/Functions (criados via MCP)
 └─ StarterPlayerScripts/
-   ├─ Main.client.luau
+   ├─ Main.local.luau
    └─ Controllers/
       ├─ FishingController.luau   -- minijogo, UI de tensão
       ├─ HungerController.luau    -- HUD
