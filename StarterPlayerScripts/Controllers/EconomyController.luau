@@ -50,8 +50,10 @@ local function buildRows<T>(window: Frame, entries: { T }, fill: (row: Frame, en
 end
 
 local function setRowText(row: Frame, name: string, price: number)
-	(row:FindFirstChild("NameLabel") :: TextLabel).Text = name;
-	(row:FindFirstChild("PriceLabel") :: TextLabel).Text = `${price}`
+	local nameLabel = row:FindFirstChild("NameLabel") :: TextLabel
+	local priceLabel = row:FindFirstChild("PriceLabel") :: TextLabel
+	nameLabel.Text = name
+	priceLabel.Text = `${price}`
 end
 
 local refreshSell: () -> ()
@@ -70,7 +72,8 @@ refreshSell = function()
 	buildRows(sellWindow, sellEntries, function(row, entry: SellEntry)
 		local name = if entry.weight then string.format("%s (%.2f kg)", entry.name, entry.weight) else entry.name
 		setRowText(row, name, entry.price)
-		(row:FindFirstChild("SellButton") :: TextButton).Activated:Connect(function()
+		local sellButton = row:FindFirstChild("SellButton") :: TextButton
+		sellButton.Activated:Connect(function()
 			sell({ entry.uid })
 		end)
 	end)
@@ -140,7 +143,8 @@ function EconomyController:Init()
 	inspectLabel = gui:WaitForChild("InspectLabel") :: TextLabel
 	statusLabel = buyWindow:WaitForChild("StatusLabel") :: TextLabel
 
-	(sellWindow:WaitForChild("SellAllButton") :: TextButton).Activated:Connect(function()
+	local sellAllButton = sellWindow:WaitForChild("SellAllButton") :: TextButton
+	sellAllButton.Activated:Connect(function()
 		local uids = {}
 		for _, entry in sellEntries do
 			table.insert(uids, entry.uid)
@@ -148,7 +152,8 @@ function EconomyController:Init()
 		sell(uids)
 	end)
 	for _, window in { sellWindow, buyWindow } do
-		(window:WaitForChild("CloseButton") :: TextButton).Activated:Connect(function()
+		local closeButton = window:WaitForChild("CloseButton") :: TextButton
+		closeButton.Activated:Connect(function()
 			window.Visible = false
 		end)
 	end
