@@ -61,7 +61,9 @@ terrain:FillCylinder(CFrame.new(0, GRASS_TOP - grassHeight / 2, 0), grassHeight,
 terrain:FillBlock(CFrame.new(80, 1, 30), Vector3.new(8, 2, 6), Enum.Material.Water)
 terrain:FillBlock(CFrame.new(-75, 1, -35), Vector3.new(8, 2, 6), Enum.Material.Water)
 
--- Altura do chão (terrain arredonda as bordas; melhor medir do que supor)
+-- Altura do chão (os voxels do terrain arredondam a superfície; melhor medir do que supor).
+-- O raycast só enxerga o terrain novo depois de um frame.
+task.wait(1)
 local groundParams = RaycastParams.new()
 groundParams.FilterType = Enum.RaycastFilterType.Include
 groundParams.FilterDescendantsInstances = { terrain }
