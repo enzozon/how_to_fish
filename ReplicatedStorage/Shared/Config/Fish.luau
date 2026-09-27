@@ -14,6 +14,7 @@ local Fish: { [string]: Types.FishDef } = {
 		weightRange = { min = 0.02, max = 0.1 },
 		aggressive = false,
 		pullStrength = 1,
+		color = Color3.fromRGB(255, 160, 140),
 	},
 	caranguejo = {
 		id = "caranguejo",
@@ -25,6 +26,7 @@ local Fish: { [string]: Types.FishDef } = {
 		weightRange = { min = 0.2, max = 1.0 },
 		aggressive = false,
 		pullStrength = 2,
+		color = Color3.fromRGB(200, 70, 40),
 	},
 	siri = {
 		id = "siri",
@@ -36,6 +38,7 @@ local Fish: { [string]: Types.FishDef } = {
 		weightRange = { min = 0.3, max = 1.2 },
 		aggressive = false,
 		pullStrength = 3,
+		color = Color3.fromRGB(70, 120, 200),
 	},
 	lagosta = {
 		id = "lagosta",
@@ -47,6 +50,7 @@ local Fish: { [string]: Types.FishDef } = {
 		weightRange = { min = 0.5, max = 3.0 },
 		aggressive = false,
 		pullStrength = 5,
+		color = Color3.fromRGB(150, 30, 60),
 	},
 }
 

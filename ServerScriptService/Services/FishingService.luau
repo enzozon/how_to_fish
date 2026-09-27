@@ -8,6 +8,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Workspace = game:GetService("Workspace")
 
 local DataService = require(script.Parent.DataService)
+local CreatureService = require(script.Parent.CreatureService)
 local FishRoller = require(script.Parent.Parent.Lib.FishRoller)
 local FightSim = require(script.Parent.Parent.Lib.FightSim)
 local Fishing = require(ReplicatedStorage.Shared.Config.Fishing)
@@ -135,8 +136,8 @@ local function consumeLure(player: Player)
 	end
 end
 
-local function onFishCaught(_player: Player, _fishId: string, _weight: number)
-	-- T08: cria o peixe no chão perto do jogador.
+local function onFishCaught(player: Player, fishId: string, weight: number)
+	CreatureService.SpawnLandedFish(player, fishId, weight)
 end
 
 local function finishFight(player: Player, cast: Cast, result: FightSim.FightResult)
