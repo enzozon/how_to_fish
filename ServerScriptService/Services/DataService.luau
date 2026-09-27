@@ -14,6 +14,7 @@ local Fish = require(Shared.Config.Fish)
 local Lures = require(Shared.Config.Lures)
 local Food = require(Shared.Config.Food)
 local Rods = require(Shared.Config.Rods)
+local Weapons = require(Shared.Config.Weapons)
 local PlayerConfig = require(Shared.Config.Player)
 
 type Profile = ProfileStore.Profile<Types.PlayerData>
@@ -90,6 +91,7 @@ function DataService:Init()
 		inventory = {},
 		equippedLure = PlayerConfig.STARTING_LURE,
 		hunger = PlayerConfig.MAX_HUNGER,
+		ownedWeapons = {},
 	}
 	-- Cast: o tipo JSONAcceptable do ProfileStore não reconhece tabelas com tipo próprio.
 	store = ProfileStore.New(STORE_NAME, template :: any)
@@ -123,19 +125,46 @@ function DataService.WaitForData(player: Player): Types.PlayerData?
 	return DataService.GetData(player)
 end
 
-function DataService.AddMoney(player: Player, amount: number): boolean
-	local profile = profiles[player]
+local function isValidAmount(amount: number): boolean
 	-- NaN falha em amount == math.floor(amount).
-	if profile == nil or amount <= 0 or amount >= math.huge or amount ~= math.floor(amount) then
-		return false
-	end
+	return amount > 0 and amount < math.huge and amount == math.floor(amount)
+end
 
-	profile.Data.money += amount
+local function syncMoney(player: Player, data: Types.PlayerData)
 	local leaderstats = player:FindFirstChild("leaderstats")
 	local money = leaderstats and leaderstats:FindFirstChild("Dinheiro")
 	if money and money:IsA("IntValue") then
-		money.Value = profile.Data.money
+		money.Value = data.money
 	end
+end
+
+function DataService.AddMoney(player: Player, amount: number): boolean
+	local profile = profiles[player]
+	if profile == nil or not isValidAmount(amount) then
+		return false
+	end
+	profile.Data.money += amount
+	syncMoney(player, profile.Data)
+	return true
+end
+
+-- Recusa se o saldo não for suficiente.
+function DataService.SpendMoney(player: Player, amount: number): boolean
+	local profile = profiles[player]
+	if profile == nil or not isValidAmount(amount) or profile.Data.money < amount then
+		return false
+	end
+	profile.Data.money -= amount
+	syncMoney(player, profile.Data)
+	return true
+end
+
+function DataService.GiveWeapon(player: Player, weaponId: string): boolean
+	local profile = profiles[player]
+	if profile == nil or Weapons[weaponId] == nil then
+		return false
+	end
+	profile.Data.ownedWeapons[weaponId] = true
 	return true
 end
 
