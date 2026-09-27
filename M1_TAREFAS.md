@@ -46,7 +46,7 @@ Liste problemas por gravidade. Corrija só os críticos.
 ## Tarefas
 
 ### T00 — Esqueleto do projeto
-Main.server.luau, Main.client.luau, pasta Services/, Controllers/, Types.luau, pastas Config/ vazias.
+Main.server.luau, Main.local.luau, pasta Services/, Controllers/, Types.luau, pastas Config/ vazias.
 Main de cada lado carrega todos os módulos da pasta e chama `:Init()` e depois `:Start()`.
 Pasta `Remotes` em ReplicatedStorage criada via MCP.
 **Teste:** play mode sem erros; Output mostra "Servidor iniciado" e "Cliente iniciado".
