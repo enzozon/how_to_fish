@@ -105,6 +105,15 @@ function CreatureService.SpawnLandedFish(player: Player, fishId: string, weight:
 	end)
 end
 
+-- Só leitura (inspeção). nil se a Part não é um peixe em terra.
+function CreatureService.GetLandedFish(part: Instance): { fishId: string, weight: number }?
+	local entry = if part:IsA("BasePart") then landed[part] else nil
+	if entry == nil then
+		return nil
+	end
+	return { fishId = entry.fishId, weight = entry.weight }
+end
+
 function CreatureService:Start()
 	Players.PlayerRemoving:Connect(function(player)
 		for part, entry in landed do
