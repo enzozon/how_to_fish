@@ -12,6 +12,7 @@ local Shared = ReplicatedStorage.Shared
 local Types = require(Shared.Types)
 local Fish = require(Shared.Config.Fish)
 local Lures = require(Shared.Config.Lures)
+local Food = require(Shared.Config.Food)
 local PlayerConfig = require(Shared.Config.Player)
 
 type Profile = ProfileStore.Profile<Types.PlayerData>
@@ -79,6 +80,9 @@ function DataService:Init()
 	for id in Lures do
 		validItemIds[id] = true
 	end
+	for id in Food do
+		validItemIds[id] = true
+	end
 
 	local template: Types.PlayerData = {
 		money = PlayerConfig.STARTING_MONEY,
@@ -108,6 +112,14 @@ end
 function DataService.GetData(player: Player): Types.PlayerData?
 	local profile = profiles[player]
 	return if profile then profile.Data else nil
+end
+
+-- Espera o save carregar. nil se o jogador sair antes.
+function DataService.WaitForData(player: Player): Types.PlayerData?
+	while profiles[player] == nil and player.Parent == Players do
+		task.wait(0.5)
+	end
+	return DataService.GetData(player)
 end
 
 function DataService.AddMoney(player: Player, amount: number): boolean
