@@ -33,7 +33,7 @@ return table.freeze({
 	LANDED_FISH_BASE_SIZE = 0.8, -- studs; lado do cubo de 0 kg
 	LANDED_FISH_SIZE_PER_KG = 0.5, -- quanto o lado cresce por kg
 	LANDED_FISH_MAX_SIZE = 3,
-	LANDED_FISH_SPAWN_DISTANCE = 4, -- studs à frente do jogador
+	LANDED_FISH_SPAWN_DISTANCE = 4, -- studs atrás do jogador
 	LANDED_FISH_JUMP_MIN_SECONDS = 0.8, -- intervalo entre pulos
 	LANDED_FISH_JUMP_MAX_SECONDS = 1.6,
 	LANDED_FISH_JUMP_UP_SPEED = 28, -- studs/s para cima em cada pulo (~2 studs de altura)

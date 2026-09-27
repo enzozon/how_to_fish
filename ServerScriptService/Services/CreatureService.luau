@@ -79,7 +79,8 @@ function CreatureService.SpawnLandedFish(player: Player, fishId: string, weight:
 	part.Name = "Peixe"
 	part.Size = Vector3.new(side, side, side)
 	part.Color = fish.color
-	part.Position = root.Position + forward * Fishing.LANDED_FISH_SPAWN_DISTANCE + Vector3.new(0, 2, 0)
+	-- Atrás do jogador: pescando, ele está virado para a água (ex.: ponta do píer).
+	part.Position = root.Position - forward * Fishing.LANDED_FISH_SPAWN_DISTANCE + Vector3.new(0, 2, 0)
 	part:SetAttribute("OwnerUserId", player.UserId)
 
 	local prompt = Instance.new("ProximityPrompt")
