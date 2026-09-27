@@ -9,4 +9,8 @@ return table.freeze({
 	MOVING_SPEED_THRESHOLD = 1, -- studs/s na horizontal para contar como "andando"
 	STARVE_DAMAGE_PER_SECOND = 5, -- com vida 100: morre em ~20 s de fome zerada
 	RESPAWN_MIN_HUNGER = 30, -- fome mínima ao (re)nascer
+	MARISCO_RESPAWN_SECONDS = 30, -- tempo até o marisco reaparecer
+	PICKUP_MAX_DISTANCE = 10, -- studs; o servidor recusa se o jogador estiver mais longe
+	EAT_HOLD_SECONDS = 1, -- quanto tempo segurar o clique para comer (cliente)
+	EAT_MIN_INTERVAL_SECONDS = 0.8, -- intervalo mínimo entre comidas (servidor); menor que EAT_HOLD_SECONDS pela latência
 })

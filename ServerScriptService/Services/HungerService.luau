@@ -44,7 +44,7 @@ end
 
 local function onCharacterAdded(player: Player)
 	-- ponytail: resetar o personagem devolve a fome ao mínimo; a morte ganha custo com a perda de peixes (GDD 2.9).
-	local data = DataService.GetData(player)
+	local data = DataService.WaitForData(player)
 	if data ~= nil and data.hunger < Survival.RESPAWN_MIN_HUNGER then
 		DataService.SetHunger(player, Survival.RESPAWN_MIN_HUNGER)
 	end
