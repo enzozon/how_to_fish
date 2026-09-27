@@ -53,7 +53,7 @@ refreshList = function()
 	clearRows()
 	for index, entry in currentEntries do
 		local row = template:Clone()
-		row.Name = "Row"
+		row.Name = `Row{index}`
 		row.LayoutOrder = index
 		row.Visible = true
 		local nameLabel = row:FindFirstChild("NameLabel") :: TextLabel
