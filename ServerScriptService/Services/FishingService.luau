@@ -47,9 +47,15 @@ local function isInWater(bobber: BasePart): boolean
 	return result ~= nil and result.Material == Enum.Material.Water
 end
 
+local function isTooFar(player: Player, bobber: BasePart): boolean
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return root == nil or not root:IsA("BasePart") or (root.Position - bobber.Position).Magnitude > Fishing.ROPE_LENGTH
+end
+
 local function followBobber(player: Player, cast: Cast)
 	local deadline = os.clock() + Fishing.SETTLE_TIMEOUT_SECONDS
-	while os.clock() < deadline do
+	while os.clock() < deadline and not cast.inWater do
 		task.wait(0.1)
 		if casts[player] ~= cast then
 			return
@@ -57,11 +63,14 @@ local function followBobber(player: Player, cast: Cast)
 		if isInWater(cast.bobber) then
 			cast.inWater = true
 			cast.bobber:SetAttribute("InWater", true)
-			return
-		end
-		if cast.bobber.AssemblyLinearVelocity.Magnitude < Fishing.SETTLE_SPEED then
+		elseif cast.bobber.AssemblyLinearVelocity.Magnitude < Fishing.SETTLE_SPEED then
 			break -- parou no chão
 		end
+	end
+
+	-- Na água: a linha "arrebenta" se o jogador se afastar mais que o comprimento dela.
+	while cast.inWater and casts[player] == cast and not isTooFar(player, cast.bobber) do
+		task.wait(0.25)
 	end
 	if casts[player] == cast then
 		removeCast(player)
@@ -78,14 +87,19 @@ local function createBobber(player: Player, tip: Attachment, velocity: Vector3):
 	bobber.Position = tip.WorldPosition
 	bobber:SetAttribute("OwnerUserId", player.UserId)
 
+	-- Beam e não RopeConstraint: a corda liga o personagem à boia do servidor e o
+	-- servidor passa a ser dono do personagem (o jogador fica preso). O limite de
+	-- comprimento é checado em followBobber.
 	local attachment = Instance.new("Attachment")
 	attachment.Parent = bobber
-	local rope = Instance.new("RopeConstraint")
-	rope.Attachment0 = tip
-	rope.Attachment1 = attachment
-	rope.Length = Fishing.ROPE_LENGTH
-	rope.Visible = true
-	rope.Parent = bobber
+	local line = Instance.new("Beam")
+	line.Attachment0 = tip
+	line.Attachment1 = attachment
+	line.Width0 = 0.05
+	line.Width1 = 0.05
+	line.FaceCamera = true
+	line.Color = ColorSequence.new(Color3.new(1, 1, 1))
+	line.Parent = bobber
 
 	bobber.Parent = Workspace
 	bobber:SetNetworkOwner(nil)
