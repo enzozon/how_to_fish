@@ -43,4 +43,17 @@ export type WeaponDef = {
 	damage: number,
 }
 
+export type ItemData = {
+	id: string, -- id de um config (Fish, Lures...)
+	weight: number?, -- kg; só peixes
+}
+
+export type PlayerData = {
+	money: number,
+	inventory: { [string]: ItemData }, -- chave = uid do item
+	equippedRod: string?, -- id em Rods; nil = sem vara
+	equippedLure: string, -- id em Lures
+	hunger: number, -- 0..MAX_HUNGER
+}
+
 return {}
