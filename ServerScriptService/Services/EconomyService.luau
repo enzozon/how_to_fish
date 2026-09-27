@@ -19,15 +19,21 @@ type SellEntry = { uid: string, name: string, weight: number?, price: number }
 
 local EconomyService = {}
 
-local lastRequestAt: { [Player]: number } = {}
+-- Intervalo mínimo por jogador e por Remote (vender e recarregar a lista em seguida é normal).
+local lastRequestAt: { [Player]: { [string]: number } } = {}
 local shopParts: { BasePart } = {}
 
-local function allowRequest(player: Player): boolean
+local function allowRequest(player: Player, remoteName: string): boolean
+	local perPlayer = lastRequestAt[player]
+	if perPlayer == nil then
+		perPlayer = {}
+		lastRequestAt[player] = perPlayer
+	end
 	local now = os.clock()
-	if now - (lastRequestAt[player] or 0) < Economy.REQUEST_MIN_INTERVAL then
+	if now - (perPlayer[remoteName] or 0) < Economy.REQUEST_MIN_INTERVAL then
 		return false
 	end
-	lastRequestAt[player] = now
+	perPlayer[remoteName] = now
 	return true
 end
 
@@ -65,7 +71,7 @@ end
 
 local function onGetSellList(player: Player): { SellEntry }
 	local data = DataService.GetData(player)
-	if not allowRequest(player) or data == nil or not EconomyService.IsNearShop(player, "Sell") then
+	if not allowRequest(player, "GetSellList") or data == nil or not EconomyService.IsNearShop(player, "Sell") then
 		return {}
 	end
 	local list: { SellEntry } = {}
@@ -83,7 +89,7 @@ end
 
 local function onSellItems(player: Player, uids: unknown)
 	local data = DataService.GetData(player)
-	if not allowRequest(player) or data == nil or not EconomyService.IsNearShop(player, "Sell") then
+	if not allowRequest(player, "SellItems") or data == nil or not EconomyService.IsNearShop(player, "Sell") then
 		return nil
 	end
 	if typeof(uids) ~= "table" or #uids > PlayerConfig.MAX_INVENTORY_ITEMS then
@@ -111,7 +117,7 @@ local function onSellItems(player: Player, uids: unknown)
 end
 
 local function onInspectValue(player: Player, target: unknown)
-	if not allowRequest(player) then
+	if not allowRequest(player, "InspectValue") then
 		return nil
 	end
 	if typeof(target) == "Instance" then
