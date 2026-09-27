@@ -13,6 +13,7 @@ local Types = require(Shared.Types)
 local Fish = require(Shared.Config.Fish)
 local Lures = require(Shared.Config.Lures)
 local Food = require(Shared.Config.Food)
+local Rods = require(Shared.Config.Rods)
 local PlayerConfig = require(Shared.Config.Player)
 
 type Profile = ProfileStore.Profile<Types.PlayerData>
@@ -147,6 +148,16 @@ function DataService.SetHunger(player: Player, value: number): boolean
 
 	profile.Data.hunger = math.clamp(value, 0, PlayerConfig.MAX_HUNGER)
 	player:SetAttribute("Hunger", profile.Data.hunger)
+	return true
+end
+
+-- No M1, equippedRod também é a posse: nil = sem vara.
+function DataService.SetEquippedRod(player: Player, rodId: string?): boolean
+	local profile = profiles[player]
+	if profile == nil or (rodId ~= nil and Rods[rodId] == nil) then
+		return false
+	end
+	profile.Data.equippedRod = rodId
 	return true
 end
 
