@@ -37,6 +37,7 @@ return table.freeze({
 	LANDED_FISH_JUMP_MIN_SECONDS = 0.8, -- intervalo entre pulos
 	LANDED_FISH_JUMP_MAX_SECONDS = 1.6,
 	LANDED_FISH_JUMP_UP_SPEED = 28, -- studs/s para cima em cada pulo (~2 studs de altura)
-	LANDED_FISH_JUMP_SIDE_SPEED = 6, -- studs/s de lado (direção aleatória)
+	LANDED_FISH_JUMP_SIDE_SPEED = 3, -- studs/s de lado (direção aleatória)
+	LANDED_FISH_HOME_PULL = 4, -- (studs/s) por stud de distância do ponto onde caiu
 	LANDED_FISH_LIFETIME_SECONDS = 120,
 })

@@ -49,18 +49,18 @@ local function onPickup(part: BasePart, player: Player)
 	removeFish(part)
 end
 
-local function jumpLoop(part: BasePart)
+local function jumpLoop(part: BasePart, home: Vector3)
 	while landed[part] do
 		task.wait(rng:NextNumber(Fishing.LANDED_FISH_JUMP_MIN_SECONDS, Fishing.LANDED_FISH_JUMP_MAX_SECONDS))
 		if landed[part] == nil then
 			return
 		end
+		-- Pula em direção aleatória, mas puxado de volta para onde caiu (não sai do píer).
 		local angle = rng:NextNumber(0, 2 * math.pi)
-		part.AssemblyLinearVelocity = Vector3.new(
-			math.cos(angle) * Fishing.LANDED_FISH_JUMP_SIDE_SPEED,
-			Fishing.LANDED_FISH_JUMP_UP_SPEED,
-			math.sin(angle) * Fishing.LANDED_FISH_JUMP_SIDE_SPEED
-		)
+		local toHome = Vector3.new(home.X - part.Position.X, 0, home.Z - part.Position.Z)
+		local side = Vector3.new(math.cos(angle), 0, math.sin(angle)) * Fishing.LANDED_FISH_JUMP_SIDE_SPEED
+			+ toHome * Fishing.LANDED_FISH_HOME_PULL
+		part.AssemblyLinearVelocity = side + Vector3.new(0, Fishing.LANDED_FISH_JUMP_UP_SPEED, 0)
 	end
 end
 
@@ -98,7 +98,7 @@ function CreatureService.SpawnLandedFish(player: Player, fishId: string, weight:
 	part.Parent = Workspace
 	part:SetNetworkOwner(nil)
 
-	task.spawn(jumpLoop, part)
+	task.spawn(jumpLoop, part, part.Position)
 	task.delay(Fishing.LANDED_FISH_LIFETIME_SECONDS, function()
 		if landed[part] then
 			removeFish(part)
