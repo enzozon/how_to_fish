@@ -6,7 +6,7 @@ return table.freeze({
 	MIN_CAST_POWER = 0.2, -- força mínima aceita (evita lançar no pé)
 	CAST_MAX_SPEED = 80, -- studs/s na força 1 (~30 studs de alcance a 35°)
 	CAST_ANGLE_DEGREES = 35, -- ângulo do lançamento acima da horizontal
-	ROPE_LENGTH = 45, -- comprimento máximo da linha
+	ROPE_LENGTH = 60, -- comprimento máximo da linha (do píer, o lançamento máximo chega a ~44)
 	CAST_COOLDOWN_SECONDS = 1, -- intervalo mínimo entre lançamentos (servidor)
 	SETTLE_TIMEOUT_SECONDS = 5, -- sem cair na água nesse tempo, a boia é recolhida
 	SETTLE_SPEED = 2, -- studs/s: abaixo disso fora da água, a boia "parou no chão"
@@ -33,10 +33,11 @@ return table.freeze({
 	LANDED_FISH_BASE_SIZE = 0.8, -- studs; lado do cubo de 0 kg
 	LANDED_FISH_SIZE_PER_KG = 0.5, -- quanto o lado cresce por kg
 	LANDED_FISH_MAX_SIZE = 3,
-	LANDED_FISH_SPAWN_DISTANCE = 4, -- studs à frente do jogador
+	LANDED_FISH_SPAWN_DISTANCE = 4, -- studs atrás do jogador
 	LANDED_FISH_JUMP_MIN_SECONDS = 0.8, -- intervalo entre pulos
 	LANDED_FISH_JUMP_MAX_SECONDS = 1.6,
 	LANDED_FISH_JUMP_UP_SPEED = 28, -- studs/s para cima em cada pulo (~2 studs de altura)
-	LANDED_FISH_JUMP_SIDE_SPEED = 6, -- studs/s de lado (direção aleatória)
+	LANDED_FISH_JUMP_SIDE_SPEED = 3, -- studs/s de lado (direção aleatória)
+	LANDED_FISH_HOME_PULL = 4, -- (studs/s) por stud de distância do ponto onde caiu
 	LANDED_FISH_LIFETIME_SECONDS = 120,
 })

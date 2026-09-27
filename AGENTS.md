@@ -13,6 +13,7 @@ Jogo Roblox de pesca + sobrevivência + chefes, co-op até 4 jogadores. Design c
 - **Não use `.client.luau`**: o Script Sync gera um Script com RunContext Client, que roda duas vezes dentro de StarterPlayerScripts.
 - Pastas vazias não sincronizam com o Studio; elas aparecem quando o primeiro arquivo entra nelas.
 - `ServerScriptService/Packages/` guarda código de terceiros: não editar; as regras de estilo (ex.: `--!strict`) não se aplicam.
+- `tools/` fica fora do Script Sync: scripts para rodar pelo MCP (`execute_luau` no Edit), como o greybox da ilha em `tools/greybox/`. São idempotentes e versionam o que o MCP monta no place.
 
 ## Linguagem e estilo
 - Luau com `--!strict` no topo de todo arquivo.
