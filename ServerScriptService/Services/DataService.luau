@@ -61,6 +61,7 @@ local function onPlayerAdded(player: Player)
 
 	profiles[player] = profile
 	createLeaderstats(player, profile.Data)
+	player:SetAttribute("Hunger", profile.Data.hunger)
 end
 
 local function countItems(inventory: { [string]: Types.ItemData }): number
@@ -122,6 +123,18 @@ function DataService.AddMoney(player: Player, amount: number): boolean
 	if money and money:IsA("IntValue") then
 		money.Value = profile.Data.money
 	end
+	return true
+end
+
+-- Limita a 0..MAX_HUNGER e espelha no atributo "Hunger" do Player (lido pelo HUD).
+function DataService.SetHunger(player: Player, value: number): boolean
+	local profile = profiles[player]
+	if profile == nil or value ~= value then
+		return false
+	end
+
+	profile.Data.hunger = math.clamp(value, 0, PlayerConfig.MAX_HUNGER)
+	player:SetAttribute("Hunger", profile.Data.hunger)
 	return true
 end
 
