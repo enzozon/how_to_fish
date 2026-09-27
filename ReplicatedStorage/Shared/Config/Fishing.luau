@@ -36,7 +36,7 @@ return table.freeze({
 	LANDED_FISH_SPAWN_DISTANCE = 4, -- studs à frente do jogador
 	LANDED_FISH_JUMP_MIN_SECONDS = 0.8, -- intervalo entre pulos
 	LANDED_FISH_JUMP_MAX_SECONDS = 1.6,
-	LANDED_FISH_JUMP_UP_SPEED = 18, -- studs/s para cima em cada pulo
+	LANDED_FISH_JUMP_UP_SPEED = 28, -- studs/s para cima em cada pulo (~2 studs de altura)
 	LANDED_FISH_JUMP_SIDE_SPEED = 6, -- studs/s de lado (direção aleatória)
 	LANDED_FISH_LIFETIME_SECONDS = 120,
 })
