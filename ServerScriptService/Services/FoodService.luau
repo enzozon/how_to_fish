@@ -145,6 +145,9 @@ local function onPlayerAdded(player: Player)
 	end)
 end
 
+-- Para quem muda comida do inventário fora daqui (ex.: venda).
+FoodService.RefreshFoodTools = refreshFoodTools
+
 function FoodService:Start()
 	local mariscos = Workspace:FindFirstChild("Mariscos")
 	if mariscos == nil then
