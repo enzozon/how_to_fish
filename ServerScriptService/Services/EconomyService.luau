@@ -9,10 +9,15 @@ local Workspace = game:GetService("Workspace")
 local DataService = require(script.Parent.DataService)
 local CreatureService = require(script.Parent.CreatureService)
 local FoodService = require(script.Parent.FoodService)
+local FishingService = require(script.Parent.FishingService)
 local Pricing = require(script.Parent.Parent.Lib.Pricing)
+local Types = require(ReplicatedStorage.Shared.Types)
 local Economy = require(ReplicatedStorage.Shared.Config.Economy)
 local Fish = require(ReplicatedStorage.Shared.Config.Fish)
 local Food = require(ReplicatedStorage.Shared.Config.Food)
+local Lures = require(ReplicatedStorage.Shared.Config.Lures)
+local Rods = require(ReplicatedStorage.Shared.Config.Rods)
+local Weapons = require(ReplicatedStorage.Shared.Config.Weapons)
 local PlayerConfig = require(ReplicatedStorage.Shared.Config.Player)
 
 type SellEntry = { uid: string, name: string, weight: number?, price: number }
@@ -141,7 +146,84 @@ local function onInspectValue(player: Player, target: unknown)
 	return nil
 end
 
+-- Loja: tudo de Rods, Lures e Weapons com preço > 0.
+type CatalogItem = { id: string, kind: "Rod" | "Lure" | "Weapon", name: string, price: number }
+type BuyResult = { ok: boolean, reason: string?, money: number? }
+
+local catalog: { [string]: CatalogItem } = {}
+local catalogOrder: { CatalogItem } = {}
+
+local function addToCatalog(kind: "Rod" | "Lure" | "Weapon", defs: { [string]: { id: string, name: string, price: number } })
+	for id, def in defs do
+		if def.price > 0 then
+			local item: CatalogItem = { id = id, kind = kind, name = def.name, price = def.price }
+			catalog[id] = item
+			table.insert(catalogOrder, item)
+		end
+	end
+end
+
+local function isOwned(data: Types.PlayerData, item: CatalogItem): boolean
+	if item.kind == "Rod" then
+		return data.equippedRod == item.id
+	elseif item.kind == "Weapon" then
+		return data.ownedWeapons[item.id] == true
+	end
+	return false -- iscas se compram quantas quiser
+end
+
+local function onGetShopList(player: Player)
+	local data = DataService.GetData(player)
+	if not allowRequest(player, "GetShopList") or data == nil or not EconomyService.IsNearShop(player, "Buy") then
+		return {}
+	end
+	local list = {}
+	for _, item in catalogOrder do
+		table.insert(list, { id = item.id, name = item.name, price = item.price, owned = isOwned(data, item) })
+	end
+	return list
+end
+
+local function onBuyItem(player: Player, id: unknown): BuyResult
+	local data = DataService.GetData(player)
+	if not allowRequest(player, "BuyItem") or data == nil or not EconomyService.IsNearShop(player, "Buy") then
+		return { ok = false, reason = "Longe da loja" }
+	end
+	local item = if typeof(id) == "string" then catalog[id] else nil
+	if item == nil then
+		return { ok = false, reason = "Item inválido" }
+	end
+	if isOwned(data, item) then
+		return { ok = false, reason = "Já tem" }
+	end
+	if data.money < item.price then
+		return { ok = false, reason = "Sem dinheiro" }
+	end
+
+	-- A isca entra primeiro: se o inventário estiver cheio, nada é cobrado.
+	if item.kind == "Lure" and DataService.AddItem(player, { id = item.id }) == nil then
+		return { ok = false, reason = "Inventário cheio" }
+	end
+	DataService.SpendMoney(player, item.price) -- saldo já conferido, sem yield no meio
+	if item.kind == "Lure" then
+		DataService.SetEquippedLure(player, item.id)
+	elseif item.kind == "Rod" then
+		DataService.SetEquippedRod(player, item.id)
+		FishingService.RefreshRodTool(player)
+	else
+		DataService.GiveWeapon(player, item.id)
+	end
+	return { ok = true, money = data.money }
+end
+
 function EconomyService:Start()
+	addToCatalog("Rod", Rods)
+	addToCatalog("Lure", Lures)
+	addToCatalog("Weapon", Weapons)
+	table.sort(catalogOrder, function(a, b)
+		return a.price < b.price
+	end)
+
 	for _, child in Workspace:GetChildren() do
 		if child:IsA("BasePart") and child:GetAttribute("ShopType") ~= nil then
 			table.insert(shopParts, child)
@@ -155,6 +237,10 @@ function EconomyService:Start()
 	getSellList.OnServerInvoke = onGetSellList
 	sellItems.OnServerInvoke = onSellItems
 	inspectValue.OnServerInvoke = onInspectValue
+	local getShopList = remotes:WaitForChild("GetShopList") :: RemoteFunction
+	local buyItem = remotes:WaitForChild("BuyItem") :: RemoteFunction
+	getShopList.OnServerInvoke = onGetShopList
+	buyItem.OnServerInvoke = onBuyItem
 
 	Players.PlayerRemoving:Connect(function(player)
 		lastRequestAt[player] = nil

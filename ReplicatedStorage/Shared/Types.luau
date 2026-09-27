@@ -62,6 +62,7 @@ export type PlayerData = {
 	equippedRod: string?, -- id em Rods; nil = sem vara
 	equippedLure: string, -- id em Lures
 	hunger: number, -- 0..MAX_HUNGER
+	ownedWeapons: { [string]: boolean }, -- armas compradas (combate no M2)
 }
 
 return {}
