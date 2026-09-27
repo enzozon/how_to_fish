@@ -142,14 +142,21 @@ makePart(hut, { Name = "Telhado", Size = Vector3.new(22, 1, 14), Position = Vect
 
 -- Reposicionamentos ---------------------------------------------------------------
 local floorTop = floorY + 0.5
-local vendor = Workspace:FindFirstChild("Vendedor")
-if vendor then
-	vendor.Position = Vector3.new(hx - 5, floorTop + vendor.Size.Y / 2, hz + 2)
+-- Dentro da cabana a câmera fica atrás das paredes: sem exigir linha de visão no prompt.
+local function placeNpc(name: string, x: number): BasePart?
+	local npc = Workspace:FindFirstChild(name)
+	if npc == nil then
+		return nil
+	end
+	npc.Position = Vector3.new(x, floorTop + npc.Size.Y / 2, hz + 2)
+	local prompt = npc:FindFirstChildOfClass("ProximityPrompt")
+	if prompt then
+		prompt.RequiresLineOfSight = false
+	end
+	return npc
 end
-local shopkeeper = Workspace:FindFirstChild("Lojista")
-if shopkeeper then
-	shopkeeper.Position = Vector3.new(hx + 5, floorTop + shopkeeper.Size.Y / 2, hz + 2)
-end
+local vendor = placeNpc("Vendedor", hx - 5)
+local shopkeeper = placeNpc("Lojista", hx + 5)
 
 local spawnLocation = Workspace:FindFirstChild("SpawnLocation")
 if spawnLocation then
