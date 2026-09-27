@@ -30,4 +30,13 @@ return table.freeze({
 	PULL_DISTANCE_PER_STRENGTH = 0.8, -- distância/s que o peixe ganha por ponto de pullStrength
 	BREAK_OVERLOAD_SECONDS = 0.75, -- tempo no máximo de tensão até arrebentar
 	MAX_FIGHT_SECONDS = 60, -- depois disso o peixe escapa
+	LANDED_FISH_BASE_SIZE = 0.8, -- studs; lado do cubo de 0 kg
+	LANDED_FISH_SIZE_PER_KG = 0.5, -- quanto o lado cresce por kg
+	LANDED_FISH_MAX_SIZE = 3,
+	LANDED_FISH_SPAWN_DISTANCE = 4, -- studs à frente do jogador
+	LANDED_FISH_JUMP_MIN_SECONDS = 0.8, -- intervalo entre pulos
+	LANDED_FISH_JUMP_MAX_SECONDS = 1.6,
+	LANDED_FISH_JUMP_UP_SPEED = 18, -- studs/s para cima em cada pulo
+	LANDED_FISH_JUMP_SIDE_SPEED = 6, -- studs/s de lado (direção aleatória)
+	LANDED_FISH_LIFETIME_SECONDS = 120,
 })

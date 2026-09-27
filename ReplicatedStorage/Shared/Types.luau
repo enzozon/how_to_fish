@@ -18,6 +18,7 @@ export type FishDef = {
 	aggressive: boolean,
 	health: number?, -- só peixes agressivos
 	pullStrength: number, -- 1..10, força dos puxões no minijogo
+	color: Color3, -- cor do peixe em terra (greybox)
 }
 
 export type LureDef = {
